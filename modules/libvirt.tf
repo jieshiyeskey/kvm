@@ -23,7 +23,7 @@ terraform {
   required_providers {
     libvirt = {
       source = "dmacvicar/libvirt"
-      version = "0.6.14"
+      version = "0.7.0"
     }
   }
 }
@@ -57,12 +57,12 @@ resource "libvirt_volume" "disk_data1" {
   format         = "qcow2"
 }
 # extra data disk for data2
-#resource "libvirt_volume" "disk_data2" {
-#  name           = "${var.hostname}-disk-data2"
-#  pool           = libvirt_pool.general.name
-#  size           = var.diskdata2Bytes
-#  format         = "qcow2"
-#}
+resource "libvirt_volume" "disk_data2" {
+  name           = "${var.hostname}-disk-data2"
+  pool           = libvirt_pool.general.name
+  size           = var.diskdata2Bytes
+  format         = "qcow2"
+}
 
 # add cloudinit disk to pool
 resource "libvirt_cloudinit_disk" "commoninit" {
@@ -96,11 +96,11 @@ resource "libvirt_domain" "general-domain" {
   vcpu = "${var.cpu}"
   disk { volume_id = libvirt_volume.image-qcow2.id }
   disk { volume_id = libvirt_volume.disk_data1.id }
-  #disk { volume_id = libvirt_volume.disk_data2.id }
+  disk { volume_id = libvirt_volume.disk_data2.id }
 
 # set to default libvirt network
 network_interface {
-  network_name = "${var.Remote_KVM_NIC}"
+    network_name = "${var.Remote_KVM_NIC}"
 }
 
 # add the cloud init disk to share user data
@@ -109,7 +109,12 @@ cloudinit = libvirt_cloudinit_disk.commoninit.id
 console {
     type = "pty"
     target_type = "serial"
+    source_service = "0"
     target_port = "0"
+}
+
+cpu { 
+    mode = "host-model"
 }
 
 graphics {
